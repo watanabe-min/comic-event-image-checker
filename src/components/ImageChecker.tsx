@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { CanvasPreview } from './CanvasPreview';
 import { useImageChecker } from '~/domains/imageChecker/useImageChecker';
+import { useCircleNameChecker } from '~/domains/imageChecker/useCircleNameChecker';
 
 /**
  * サークル名入力と画像選択をしてチェックする
@@ -8,7 +9,10 @@ import { useImageChecker } from '~/domains/imageChecker/useImageChecker';
 export default function ImageChecker() {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const { hasBlack, isBlank, hasName, checkImage } = useImageChecker();
+
+  const { hasBlack, isBlank, checkImage } = useImageChecker();
+  const { hasName, checkCircleName } = useCircleNameChecker();
+
   const [circleName, setCircleName] = useState<string>('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -40,7 +44,10 @@ export default function ImageChecker() {
       {previewUrl && (
         <CanvasPreview
           imageUrl={previewUrl}
-          onCanvasReady={(canvas) => checkImage(canvas, circleName)}
+          onCanvasReady={(canvas) => {
+            checkImage(canvas); // 黒枠 & 白紙
+            checkCircleName(canvas, circleName); // サークル名
+          }}
         />
       )}
 
