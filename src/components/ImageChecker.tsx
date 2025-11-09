@@ -4,6 +4,9 @@ import { useImageChecker } from '~/domains/imageChecker/useImageChecker';
 import { useCircleNameChecker } from '~/domains/imageChecker/useCircleNameChecker';
 import { useDiffChecker } from '~/domains/imageChecker/useDiffChecker';
 
+const expectedWidth = 635;
+const expectedHeight = 903;
+
 /**
  * サークル名入力と画像選択をしてチェックする
  */
@@ -11,6 +14,7 @@ export default function ImageChecker() {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [circleName, setCircleName] = useState<string>('');
+  const [isSizeValid, setIsSizeValid] = useState<boolean | null>(null);
 
   const { hasBlack, isBlank, hasName, checkImage, checkCircleName } = useImageChecker();
 
@@ -22,7 +26,15 @@ export default function ImageChecker() {
     if (e.target.files && e.target.files[0]) {
       const selected = e.target.files[0];
       setFile(selected);
-      setPreviewUrl(URL.createObjectURL(selected));
+      const url = URL.createObjectURL(selected);
+      setPreviewUrl(url);
+
+      // ここで元画像のサイズチェック
+      const img = new Image();
+      img.src = url;
+      img.onload = () => {
+        setIsSizeValid(img.naturalWidth === expectedWidth && img.naturalHeight === expectedHeight);
+      };
     }
   };
 
@@ -112,7 +124,11 @@ export default function ImageChecker() {
       )}
 
       <div className="status">
-        <p>黒枠残存: {hasBlack === null ? '-' : hasBlack ? 'OK' : '消えているかも'}</p>
+        <p>
+          画像サイズ:{' '}
+          {isSizeValid === null ? '-' : isSizeValid ? 'OK.規定サイズです' : 'NG.サイズが異なります'}
+        </p>
+        <p>黒枠残存: {hasBlack === null ? '-' : hasBlack ? 'OK' : 'NG.消えています'}</p>
         <p>
           左上スペースナンバーエリア:{' '}
           {isBlank === null
@@ -121,7 +137,7 @@ export default function ImageChecker() {
               ? 'OK.空白になっています'
               : 'NG.余計な文字などが入っています'}
         </p>
-        <p>サークル名: {hasName === null ? '-' : hasName ? 'OK' : '一致しません'}</p>
+        <p>サークル名: {hasName === null ? '-' : hasName ? 'OK' : 'NG.一致しません'}</p>
       </div>
 
       {diffCanvasUrl && (
