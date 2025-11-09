@@ -1,0 +1,73 @@
+body {
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  background-color: #f3f4f6;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  max-width: 500px;
+  margin: 40px auto;
+  padding: 24px;
+  background-color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+h1 {
+  text-align: center;
+  font-size: 24px;
+  margin-bottom: 12px;
+}
+
+p.description {
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 24px;
+}
+
+.input-group {
+  margin-bottom: 16px;
+}
+
+.input-group label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.input-group input[type="text"],
+.input-group input[type="file"] {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.status {
+  margin-top: 16px;
+  font-size: 14px;
+}
+
+.status p {
+  margin: 4px 0;
+}
+
+.canvas-wrapper {
+  width: 160px;
+  height: 113px;
+  border: 1px solid #ccc;
+  margin-top: 12px;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+canvas {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
