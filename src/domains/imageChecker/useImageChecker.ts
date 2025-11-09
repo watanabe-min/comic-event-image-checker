@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Tesseract from 'tesseract.js';
 
 /**
  * テンプレートの黒枠があるかどうか、左上が白紙であるかどうかチェック
@@ -6,48 +7,87 @@ import { useState } from 'react';
 export function useImageChecker() {
   const [hasBlack, setHasBlack] = useState<boolean | null>(null);
   const [isBlank, setIsBlank] = useState<boolean | null>(null);
+  const [hasName, setHasName] = useState<boolean | null>(null);
 
+  /** 黒枠 & 左上白紙チェック */
   const checkImage = (canvas: HTMLCanvasElement) => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const data = imageData.data;
+    const { width, height } = canvas;
+    const data = ctx.getImageData(0, 0, width, height).data;
 
-    // ---------- 黒枠チェック ----------
+    // 黒枠チェック
     let blackFound = false;
-    for (let i = 0; i < data.length; i += 4) {
-      const [r, g, b] = [data[i], data[i + 1], data[i + 2]];
-      if (r < 30 && g < 30 && b < 30) {
-        blackFound = true;
-        break;
+    const borderWidth = 22; // 黒枠線の太さ
+    for (let x = 0; x < width; x++) {
+      for (let y of [0, height - 1]) {
+        const i = (y * width + x) * 4;
+        const [r, g, b] = [data[i], data[i + 1], data[i + 2]];
+        if (r < 50 && g < 50 && b < 50) {
+          blackFound = true;
+          break;
+        }
+      }
+      if (blackFound) break;
+    }
+    if (!blackFound) {
+      for (let y = 0; y < height; y++) {
+        for (let x of [0, width - 1]) {
+          const i = (y * width + x) * 4;
+          const [r, g, b] = [data[i], data[i + 1], data[i + 2]];
+          if (r < 50 && g < 50 && b < 50) {
+            blackFound = true;
+            break;
+          }
+        }
+        if (blackFound) break;
       }
     }
     setHasBlack(blackFound);
 
-    // ---------- 左上白紙チェック（差分 or 単純色判定） ----------
-    const regionSize = 150; // 左上150px範囲
-    let isWhiteArea = true;
+    // 左上白紙チェック（180px範囲）
+    // ---------- 左上白紙チェック（黒枠を除外） ----------
+    const regionSize = 180; // 左上180px範囲
+    const threshold = 180; // 白とみなす最低値
+    let nonWhiteCount = 0;
 
-    for (let y = 0; y < regionSize; y++) {
-      for (let x = 0; x < regionSize; x++) {
+    const checkWidth = regionSize - borderWidth;
+    const checkHeight = regionSize - borderWidth;
+    const totalCheckPixels = checkWidth * checkHeight;
+
+    for (let y = borderWidth; y < regionSize; y++) {
+      for (let x = borderWidth; x < regionSize; x++) {
         const index = (y * canvas.width + x) * 4;
         const [r, g, b] = [data[index], data[index + 1], data[index + 2]];
 
-        if (!(r > 200 && g > 200 && b > 200)) {
-          isWhiteArea = false;
-          break;
+        if (r < threshold || g < threshold || b < threshold) {
+          nonWhiteCount++;
         }
       }
-      if (!isWhiteArea) break;
     }
 
-    setIsBlank(isWhiteArea);
+    // 全体の25%以下なら OK とする
+    const nonWhiteRatio = nonWhiteCount / totalCheckPixels;
+    setIsBlank(nonWhiteRatio <= 0.25);
+  };
+
+  /** サークル名チェック */
+  const checkCircleName = async (canvas: HTMLCanvasElement, circleName: string) => {
+    if (!circleName) {
+      setHasName(null);
+      return;
+    }
+    const { data } = await Tesseract.recognize(canvas, 'eng');
+    const text = data.text.replace(/\s/g, '');
+    setHasName(text.includes(circleName.replace(/\s/g, '')));
   };
 
   return {
     hasBlack,
     isBlank,
+    hasName,
     checkImage,
+    checkCircleName,
   };
 }
