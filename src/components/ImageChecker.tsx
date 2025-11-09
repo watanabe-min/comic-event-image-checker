@@ -128,9 +128,9 @@ export default function ImageChecker() {
           画像サイズ:{' '}
           {isSizeValid === null ? '-' : isSizeValid ? 'OK.規定サイズです' : 'NG.サイズが異なります'}
         </p>
-        <p>黒枠残存: {hasBlack === null ? '-' : hasBlack ? 'OK' : 'NG.消えています'}</p>
+        <p>黒線枠: {hasBlack === null ? '-' : hasBlack ? 'OK' : 'NG.消えています'}</p>
         <p>
-          左上スペースナンバーエリア:{' '}
+          スペースナンバーエリア(左上):{' '}
           {isBlank === null
             ? '-'
             : isBlank
