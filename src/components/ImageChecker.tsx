@@ -27,10 +27,6 @@ export default function ImageChecker() {
 
   const [diffCanvas, setDiffCanvas] = useState<string | null>(null);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCircleName(e.target.value);
-  };
-
   return (
     <div>
       <div className="input-group">

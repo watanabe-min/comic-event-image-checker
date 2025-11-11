@@ -23,9 +23,7 @@ export function useFileInput(expectedWidth: number, expectedHeight: number) {
       const img = new Image();
       img.src = url;
       img.onload = () => {
-        setIsSizeValid(
-          img.naturalWidth === expectedWidth && img.naturalHeight === expectedHeight
-        );
+        setIsSizeValid(img.naturalWidth === expectedWidth && img.naturalHeight === expectedHeight);
       };
     }
   };
