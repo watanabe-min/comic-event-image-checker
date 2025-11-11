@@ -78,9 +78,27 @@ export function useImageChecker() {
       setHasName(null);
       return;
     }
-    const { data } = await Tesseract.recognize(canvas, 'eng');
-    const text = data.text.replace(/\s/g, '');
-    setHasName(text.includes(circleName.replace(/\s/g, '')));
+
+    const normalize = (s: string) => s.replace(/\s/g, '').normalize('NFKC');
+    const target = normalize(circleName);
+
+    try {
+      // まず英字モデルで試す
+      let { data } = await Tesseract.recognize(canvas, 'eng');
+      let text = normalize(data.text || '');
+      if (text.includes(target)) {
+        setHasName(true);
+        return;
+      }
+
+      // 英字でマッチしなければ日本語モデル（日本語+英字）で再試行
+      const { data: dataJ } = await Tesseract.recognize(canvas, 'jpn+eng');
+      text = normalize(dataJ.text || '');
+      setHasName(text.includes(target));
+    } catch (e) {
+      // OCR 中のエラーや失敗は不一致扱い
+      setHasName(false);
+    }
   };
 
   return {
