@@ -17,34 +17,55 @@ export function useImageChecker() {
     const { width, height } = canvas;
     const data = ctx.getImageData(0, 0, width, height).data;
 
-    // 黒枠チェック
-    let blackFound = false;
-    const borderWidth = 22; // 黒枠線の太さ
-    for (let x = 0; x < width; x++) {
-      for (let y of [0, height - 1]) {
-        const i = (y * width + x) * 4;
-        const [r, g, b] = [data[i], data[i + 1], data[i + 2]];
-        if (r < 50 && g < 50 && b < 50) {
-          blackFound = true;
-          break;
-        }
-      }
-      if (blackFound) break;
-    }
-    if (!blackFound) {
-      for (let y = 0; y < height; y++) {
-        for (let x of [0, width - 1]) {
+    // --- 黒枠チェック（borderWidth の帯領域内で黒が十分に存在するか） ---
+    const borderWidth = 22; // 黒枠の想定幅(px)
+    const darkThreshold = 50; // これ以下を「黒」とみなす
+    const requiredRatio = 0.6; // 帯領域内でこの割合以上が黒なら枠ありとみなす
+
+    // 指定された水平帯域に黒が十分にあるかチェック
+    const checkHorizontalBand = (yStart: number, yEnd: number) => {
+      let blackCount = 0;
+      let total = 0;
+      const ys = Math.max(0, yStart);
+      const ye = Math.min(height, yEnd);
+      for (let y = ys; y < ye; y++) {
+        for (let x = 0; x < width; x++) {
           const i = (y * width + x) * 4;
-          const [r, g, b] = [data[i], data[i + 1], data[i + 2]];
-          if (r < 50 && g < 50 && b < 50) {
-            blackFound = true;
-            break;
-          }
+          const r = data[i],
+            g = data[i + 1],
+            b = data[i + 2];
+          total++;
+          if (r < darkThreshold && g < darkThreshold && b < darkThreshold) blackCount++;
         }
-        if (blackFound) break;
       }
-    }
-    setHasBlack(blackFound);
+      return total === 0 ? false : blackCount / total >= requiredRatio;
+    };
+    // 指定された垂直帯域に黒が十分にあるかチェック
+    const checkVerticalBand = (xStart: number, xEnd: number) => {
+      let blackCount = 0;
+      let total = 0;
+      const xs = Math.max(0, xStart);
+      const xe = Math.min(width, xEnd);
+      for (let x = xs; x < xe; x++) {
+        for (let y = 0; y < height; y++) {
+          const i = (y * width + x) * 4;
+          const r = data[i],
+            g = data[i + 1],
+            b = data[i + 2];
+          total++;
+          if (r < darkThreshold && g < darkThreshold && b < darkThreshold) blackCount++;
+        }
+      }
+      return total === 0 ? false : blackCount / total >= requiredRatio;
+    };
+
+    const top = checkHorizontalBand(0, borderWidth);
+    const bottom = checkHorizontalBand(height - borderWidth, height);
+    const left = checkVerticalBand(0, borderWidth);
+    const right = checkVerticalBand(width - borderWidth, width);
+
+    // 全ての辺に黒枠があるかどうか
+    setHasBlack(top && bottom && left && right);
 
     // 左上白紙チェック（180px範囲）
     // ---------- 左上白紙チェック（黒枠を除外） ----------
@@ -54,11 +75,12 @@ export function useImageChecker() {
 
     const checkWidth = regionSize - borderWidth;
     const checkHeight = regionSize - borderWidth;
-    const totalCheckPixels = checkWidth * checkHeight;
+    const totalCheckPixels = Math.max(1, checkWidth * checkHeight);
 
     for (let y = borderWidth; y < regionSize; y++) {
       for (let x = borderWidth; x < regionSize; x++) {
-        const index = (y * canvas.width + x) * 4;
+        if (x >= width || y >= height) continue;
+        const index = (y * width + x) * 4;
         const [r, g, b] = [data[index], data[index + 1], data[index + 2]];
 
         if (r < threshold || g < threshold || b < threshold) {
