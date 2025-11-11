@@ -1,6 +1,7 @@
 export function useTemplateDiff() {
   const createDiff = async (canvas: HTMLCanvasElement, template: string) => {
     try {
+      // テンプレート画像読み込み
       const img = new Image();
       img.src = template;
       await img.decode();
@@ -8,10 +9,12 @@ export function useTemplateDiff() {
       const width = canvas.width;
       const height = canvas.height;
 
+      // キャンバスのピクセルデータ取得
       const mainCtx = canvas.getContext('2d');
       if (!mainCtx) return null;
       const mainData = mainCtx.getImageData(0, 0, width, height);
 
+      // テンプレート画像をキャンバスに描画、ピクセルデータを取得
       const templateCanvas = document.createElement('canvas');
       templateCanvas.width = width;
       templateCanvas.height = height;
@@ -20,14 +23,17 @@ export function useTemplateDiff() {
       templateCtx.drawImage(img, 0, 0, width, height);
       const templateData = templateCtx.getImageData(0, 0, width, height);
 
+      // 差分検出 & 赤色でハイライト
       const diffCanvas = document.createElement('canvas');
       diffCanvas.width = width;
       diffCanvas.height = height;
       const ctx = diffCanvas.getContext('2d');
       if (!ctx) return null;
 
+      // 差分用イメージデータ作成
       const diffImage = ctx.createImageData(width, height);
       const len = mainData.data.length;
+      // ピクセルごとに比較
       for (let i = 0; i < len; i += 4) {
         const r1 = mainData.data[i],
           g1 = mainData.data[i + 1],
@@ -45,6 +51,7 @@ export function useTemplateDiff() {
         }
       }
 
+      // 差分イメージをキャンバスに描画
       ctx.putImageData(diffImage, 0, 0);
       return diffCanvas.toDataURL();
     } catch {
